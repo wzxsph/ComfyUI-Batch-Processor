@@ -1,5 +1,10 @@
 # ComfyUI Batch Processor
 
+[中文版 (Chinese Version)](./README_zh-cn.md)
+
+> [!NOTE]
+> This is my first project on GitHub! It was developed with significant assistance from AI. I am still learning and refining the code, so it might not be perfect. Feedback and suggestions are very welcome!
+
 A modern, fast, and feature-rich automation tool for processing image workflows in ComfyUI. 
 Built with Python, CustomTkinter, and WebSockets to provide real-time generations without blocking the user interface.
 

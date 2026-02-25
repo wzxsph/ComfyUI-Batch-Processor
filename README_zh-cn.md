@@ -1,5 +1,10 @@
 # ComfyUI 批处理专业版 (ComfyUI Batch Processor)
 
+[English Version](./README.md)
+
+> [!NOTE]
+> 这是我在 GitHub 上的第一个项目！本项目主要在 AI 的协助下完成。作为一名初学者，代码可能还比较青涩，也可能存在不完善的地方，非常欢迎大家的指正与建议！
+
 这是一个现代、快速且功能丰富的 ComfyUI 工作流自动化处理工具。
 基于 Python、CustomTkinter 和 WebSockets 构建，提供实时的生成反馈，且不会卡死用户界面。
 
