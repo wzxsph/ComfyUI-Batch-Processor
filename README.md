@@ -25,9 +25,10 @@ Built with Python, CustomTkinter, and WebSockets to provide real-time generation
 
 ## 🚀 Installation & Usage
 
-1. **Clone or Navigate** to your directory:
+1. **Clone the repository**:
     ```bash
-    cd comfyui
+    git clone https://github.com/wzxsph/ComfyUI-Batch-Processor.git
+    cd ComfyUI-Batch-Processor
     ```
 
 2. **Run the Application using `uv`**:

@@ -25,9 +25,10 @@
 
 ## 🚀 安装与运行
 
-1. **进入项目目录**:
+1. **克隆仓库**:
     ```bash
-    cd comfyui
+    git clone https://github.com/wzxsph/ComfyUI-Batch-Processor.git
+    cd ComfyUI-Batch-Processor
     ```
 
 2. **使用 `uv` 启动程序**:
