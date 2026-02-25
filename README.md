@@ -10,6 +10,8 @@
 A modern, fast, and feature-rich automation tool for processing image workflows in ComfyUI. 
 Built with Python, CustomTkinter, and WebSockets to provide real-time generations without blocking the user interface.
 
+![UI Demo](./demo.gif)
+
 ## ✨ Features
 * **Modern Interface**: A sleek dark-mode UI built with `CustomTkinter`.
 * **Interactive A/B Slider**: Compare Input and Output images seamlessly using a mouse-driven sliding delimiter.
