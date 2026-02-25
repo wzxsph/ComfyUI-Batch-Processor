@@ -1,0 +1,45 @@
+name: Python Application
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Install dependencies
+      run: |
+        uv sync
+
+    - name: Lint with ruff
+      run: |
+        # 运行 ruff 语法检查以及格式检查
+        # 使用 uvx (uv tool run) 可以直接运行 ruff 而无需在项目依赖中显式安装
+        uvx ruff check --output-format=github .
+        
+    - name: Check code formatting
+      # 如果格式不对允许继续（避免初次引入因为格式问题阻塞）
+      continue-on-error: true
+      run: |
+        uvx ruff format --check .

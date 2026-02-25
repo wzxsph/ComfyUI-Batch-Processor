@@ -1,5 +1,7 @@
 # ComfyUI Batch Processor
 
+[![Python Application](https://github.com/wzxsph/ComfyUI-Batch-Processor/actions/workflows/python-app.yml/badge.svg)](https://github.com/wzxsph/ComfyUI-Batch-Processor/actions/workflows/python-app.yml)
+
 [中文版 (Chinese Version)](./README_zh-cn.md)
 
 > [!NOTE]
