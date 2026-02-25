@@ -10,10 +10,11 @@ Built with Python, CustomTkinter, and WebSockets to provide real-time generation
 
 ## ✨ Features
 * **Modern Interface**: A sleek dark-mode UI built with `CustomTkinter`.
+* **Interactive A/B Slider**: Compare Input and Output images seamlessly using a mouse-driven sliding delimiter.
+* **Output Gallery**: Navigate through history using "Next/Prev" buttons to review all generated images.
+* **Responsive & Flexible**: Optimized layout that eliminates whitespace. Foldable console to maximize image viewing area.
 * **Real-time Logging & Progress**: Connects to the ComfyUI WebSocket server (`ws://`) to track node progress exactly as it runs.
-* **Non-Blocking Operations**: Uses an asynchronous thread and queue architecture ensuring the GUI remains perfectly fluid during long generations.
-* **Instant Preview**: Displays generated images natively in the app immediately after the workflow completes.
-* **Easy Setup**: Project dependencies are fully configured via `pyproject.toml` using `uv`.
+* **Non-Blocking Operations**: Multi-threaded architecture ensures the GUI remains fluid during generations.
 
 ## 🛠 Prerequisites
 * [Python 3.13+](https://www.python.org/downloads/)
