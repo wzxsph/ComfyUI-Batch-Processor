@@ -1,5 +1,3 @@
-import sys
-
 def example_modern_ui():
     """
     Example function to showcase the new Modern CustomTkinter UI.

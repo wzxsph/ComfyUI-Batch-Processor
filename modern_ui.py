@@ -1,8 +1,5 @@
 import os
-import sys
 import json
-import time
-import shutil
 import threading
 import queue
 import tkinter as tk
@@ -85,7 +82,8 @@ class ABComparisonWidget(ctk.CTkFrame):
             return
 
         ref_img = self.img_b_pil if self.img_b_pil else self.img_a_pil
-        if not ref_img: return
+        if not ref_img:
+            return
         
         img_w, img_h = ref_img.size
         ratio = min(self._canvas_width / img_w, self._canvas_height / img_h)
@@ -412,7 +410,7 @@ class ModernComfyUIApp(ctk.CTk):
             self.append_log(f"✅ Connected to ComfyUI. Found {len(images_to_process)} images.")
 
             for i, filename in enumerate(images_to_process, 1):
-                self.append_log(f"==============================")
+                self.append_log("==============================")
                 self.append_log(f"🖼️ [{i}/{len(images_to_process)}] Processing: {filename}")
                 self.update_progress(0, 1) 
                 

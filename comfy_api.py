@@ -1,4 +1,3 @@
-import os
 import json
 import uuid
 import requests
@@ -65,12 +64,14 @@ class ComfyUIAPI:
         try:
             self.ws.connect(f"ws://{self.server_address}/ws?clientId={self.client_id}")
         except Exception as e:
-            if log_callback: log_callback(f"❌ WS Connect Error: {e}")
+            if log_callback:
+                log_callback(f"❌ WS Connect Error: {e}")
             return None
             
         queue_res = self.queue_prompt(prompt)
         prompt_id = queue_res['prompt_id']
-        if log_callback: log_callback(f"📦 Task queued. Prompt ID: {prompt_id}")
+        if log_callback:
+            log_callback(f"📦 Task queued. Prompt ID: {prompt_id}")
         
         try:
             while True:
@@ -82,16 +83,21 @@ class ComfyUIAPI:
                         if data['node'] is None and data['prompt_id'] == prompt_id:
                             break # Execution done
                         elif data['node'] is not None:
-                            if log_callback: log_callback(f"⚡ Executing Node ID: {data['node']}")
+                            if log_callback:
+                                log_callback(f"⚡ Executing Node ID: {data['node']}")
                     elif message['type'] == 'progress':
                         data = message['data']
-                        if status_callback: status_callback(data['value'], data['max'])
+                        if status_callback:
+                            status_callback(data['value'], data['max'])
                     elif message['type'] == 'execution_start':
-                        if log_callback: log_callback(f"🚀 Execution started on ComfyUI backend.")
+                        if log_callback:
+                            log_callback("🚀 Execution started on ComfyUI backend.")
                     elif message['type'] == 'execution_cached':
-                        if log_callback: log_callback(f"♻️ Execution used cache for some nodes.")
+                        if log_callback:
+                            log_callback("♻️ Execution used cache for some nodes.")
                     elif message['type'] == 'execution_interrupted':
-                        if log_callback: log_callback(f"🛑 Execution interrupted!")
+                        if log_callback:
+                            log_callback("🛑 Execution interrupted!")
                         break
         finally:
             self.ws.close()
