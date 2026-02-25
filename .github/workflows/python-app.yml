@@ -71,14 +71,16 @@ jobs:
 
       - name: Build Executable with PyInstaller
         run: |
-          uv run pip install pyinstaller
-          uv run pyinstaller --noconfirm --onefile --windowed --icon=icon.ico --collect-all customtkinter --name "ComfyUI-Batch-Pro" main.py
+          uv run pyinstaller --noconfirm --onefile --windowed --icon=icon.ico --collect-all customtkinter --name "ComfyUI-Batch-Pro-Windows" main.py
+          uv run pyinstaller --noconfirm --onefile --icon=icon.ico --collect-all customtkinter --name "ComfyUI-Batch-Pro-Debug" main.py
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ComfyUI-Batch-Pro-Windows.exe
-          path: dist/ComfyUI-Batch-Pro.exe
+          name: ComfyUI-Batch-Pro-Executables
+          path: |
+            dist/ComfyUI-Batch-Pro-Windows.exe
+            dist/ComfyUI-Batch-Pro-Debug.exe
 
   release:
     name: Create GitHub Release
@@ -92,11 +94,11 @@ jobs:
       - name: Download Windows Executable
         uses: actions/download-artifact@v4
         with:
-          name: ComfyUI-Batch-Pro-Windows.exe
+          name: ComfyUI-Batch-Pro-Executables
           path: build_artifacts
         
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
           generateReleaseNotes: true
-          artifacts: "build_artifacts/ComfyUI-Batch-Pro.exe"
+          artifacts: "build_artifacts/ComfyUI-Batch-Pro-Windows.exe,build_artifacts/ComfyUI-Batch-Pro-Debug.exe"

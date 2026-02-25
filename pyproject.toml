@@ -10,3 +10,8 @@ dependencies = [
     "websocket-client",
     "pillow",
 ]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.19.0",
+]

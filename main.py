@@ -8,15 +8,24 @@ def example_modern_ui():
         app = ModernComfyUIApp()
         app.mainloop()
     except Exception as e:
-        print(f"Failed to start Modern UI: {e}")
+        with open("crash_log_ui.txt", "w") as f:
+            f.write(f"Failed to start Modern UI:\n")
+            import traceback
+            traceback.print_exc(file=f)
+
+import traceback
 
 def main():
     """
     Main entry point of the project.
     """
-    print("Welcome to ComfyUI Batch Processor Pro!")
-    print("Starting the modern UI...")
-    example_modern_ui()
+    try:
+        # Avoid using print statements in windowed mode as sys.stdout can be None and cause crashes
+        example_modern_ui()
+    except Exception as e:
+        with open("crash_log.txt", "w") as f:
+            f.write("Application crashed on startup:\n")
+            traceback.print_exc(file=f)
 
 if __name__ == "__main__":
     main()
