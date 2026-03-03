@@ -1,6 +1,6 @@
 [project]
 name = "comfyui"
-version = "0.1.5"
+version = "0.1.6"
 description = "Modern batch processing tool for ComfyUI with bilingual support"
 readme = "README.md"
 requires-python = ">=3.13"
