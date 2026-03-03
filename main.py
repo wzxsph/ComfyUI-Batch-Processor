@@ -8,6 +8,7 @@ def example_modern_ui():
     """
     try:
         from modern_ui import ModernComfyUIApp
+
         app = ModernComfyUIApp()
         app.mainloop()
     except Exception:
