@@ -5,6 +5,8 @@ import websocket
 import urllib.request
 import urllib.parse
 
+from localization import t
+
 class ComfyUIAPI:
     """
     Modular wrapper for ComfyUI's REST and WebSocket API.
@@ -65,13 +67,13 @@ class ComfyUIAPI:
             self.ws.connect(f"ws://{self.server_address}/ws?clientId={self.client_id}")
         except Exception as e:
             if log_callback:
-                log_callback(f"❌ WS Connect Error: {e}")
+                log_callback(t('ws_connect_error', error=e))
             return None
             
         queue_res = self.queue_prompt(prompt)
         prompt_id = queue_res['prompt_id']
         if log_callback:
-            log_callback(f"📦 Task queued. Prompt ID: {prompt_id}")
+            log_callback(t('ws_task_queued', prompt_id=prompt_id))
         
         try:
             while True:
@@ -84,20 +86,20 @@ class ComfyUIAPI:
                             break # Execution done
                         elif data['node'] is not None:
                             if log_callback:
-                                log_callback(f"⚡ Executing Node ID: {data['node']}")
+                                log_callback(t('ws_executing_node', node_id=data['node']))
                     elif message['type'] == 'progress':
                         data = message['data']
                         if status_callback:
                             status_callback(data['value'], data['max'])
                     elif message['type'] == 'execution_start':
                         if log_callback:
-                            log_callback("🚀 Execution started on ComfyUI backend.")
+                            log_callback(t('ws_execution_started'))
                     elif message['type'] == 'execution_cached':
                         if log_callback:
-                            log_callback("♻️ Execution used cache for some nodes.")
+                            log_callback(t('ws_execution_cached'))
                     elif message['type'] == 'execution_interrupted':
                         if log_callback:
-                            log_callback("🛑 Execution interrupted!")
+                            log_callback(t('ws_execution_interrupted'))
                         break
         finally:
             self.ws.close()

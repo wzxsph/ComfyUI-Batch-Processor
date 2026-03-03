@@ -13,6 +13,8 @@ try:
 except ImportError:
     from .comfy_api import ComfyUIAPI
 
+from localization import get_localizer, t
+
 class ABComparisonWidget(ctk.CTkFrame):
     """
     A custom widget that displays an interactive A/B slider for comparing two images.
@@ -78,7 +80,7 @@ class ABComparisonWidget(ctk.CTkFrame):
         self.canvas.delete("all")
         
         if not self.img_a_pil and not self.img_b_pil:
-            self.canvas.create_text(self._canvas_width/2, self._canvas_height/2, text="No Images Loaded\nReady for generation...", fill="#aaaaaa", justify="center", font=("Arial", 16))
+            self.canvas.create_text(self._canvas_width/2, self._canvas_height/2, text=t('canvas_no_images'), fill="#aaaaaa", justify="center", font=("Arial", 16))
             return
 
         ref_img = self.img_b_pil if self.img_b_pil else self.img_a_pil
@@ -117,16 +119,17 @@ class ABComparisonWidget(ctk.CTkFrame):
         
         # Labels
         if self.img_a_pil:
-            self.canvas.create_text(off_x + 10, off_y + 10, text="Original", fill="white", anchor="nw", font=("Arial", 14, "bold"))
+            self.canvas.create_text(off_x + 10, off_y + 10, text=t('label_original'), fill="white", anchor="nw", font=("Arial", 14, "bold"))
         if self.img_b_pil:
-            self.canvas.create_text(off_x + new_w - 10, off_y + 10, text="Generated", fill="white", anchor="ne", font=("Arial", 14, "bold"))
+            self.canvas.create_text(off_x + new_w - 10, off_y + 10, text=t('label_generated'), fill="white", anchor="ne", font=("Arial", 14, "bold"))
 
 
 class ModernComfyUIApp(ctk.CTk):
     def __init__(self):
         super().__init__()
         
-        self.title("ComfyUI Batch Processor Pro")
+        self.localizer = get_localizer()
+        self.title(t('app_title'))
         self.geometry("1200x800")
         self.minsize(900, 600)
         
@@ -149,6 +152,14 @@ class ModernComfyUIApp(ctk.CTk):
         self.setup_ui()
         self.check_queues()
         self.load_gallery_from_disk()
+    
+    def change_language(self, lang_code):
+        """Change the language and reload UI."""
+        if self.localizer.set_language(lang_code):
+            # Restart the application by destroying and recreating
+            self.destroy()
+            app = ModernComfyUIApp()
+            app.mainloop()
         
     def setup_ui(self):
         # ------ SIDEBAR (Left) ------
@@ -156,54 +167,81 @@ class ModernComfyUIApp(ctk.CTk):
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(9, weight=1)
         
-        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="ComfyUI Batch Pro", font=ctk.CTkFont(size=22, weight="bold"))
-        self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 10))
+        # Language Selector (Top)
+        lang_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
+        lang_frame.grid(row=0, column=0, padx=20, pady=(20, 10), sticky="ew")
+        
+        lbl_lang = ctk.CTkLabel(lang_frame, text=t('language_selector_label'), font=ctk.CTkFont(family="Microsoft YaHei", size=11))
+        lbl_lang.pack(side="left")
+        
+        lang_options = [self.localizer.get_language_name('en'), self.localizer.get_language_name('zh')]
+        current_lang_name = self.localizer.get_language_name()
+        
+        self.lang_combobox = ctk.CTkComboBox(
+            lang_frame,
+            values=lang_options,
+            state="readonly",
+            width=100,
+            font=ctk.CTkFont(family="Microsoft YaHei", size=11),
+            command=self._on_language_change
+        )
+        self.lang_combobox.set(current_lang_name)
+        self.lang_combobox.pack(side="right")
+        
+        self.logo_label = ctk.CTkLabel(self.sidebar_frame, text=t('logo_text'), font=ctk.CTkFont(family="Microsoft YaHei", size=22, weight="bold"))
+        self.logo_label.grid(row=1, column=0, padx=20, pady=(20, 10))
         
         # Server Config
-        self.lbl_server = ctk.CTkLabel(self.sidebar_frame, text="Server Config:")
-        self.lbl_server.grid(row=1, column=0, padx=20, pady=(10, 0), sticky="w")
-        self.ent_url = ctk.CTkEntry(self.sidebar_frame, placeholder_text="127.0.0.1:8188")
+        self.lbl_server = ctk.CTkLabel(self.sidebar_frame, text=t('server_config'), font=ctk.CTkFont(family="Microsoft YaHei", size=14))
+        self.lbl_server.grid(row=2, column=0, padx=20, pady=(10, 0), sticky="w")
+        self.ent_url = ctk.CTkEntry(self.sidebar_frame, placeholder_text=t('server_placeholder'), font=ctk.CTkFont(family="Microsoft YaHei", size=13))
         self.ent_url.insert(0, "127.0.0.1:8188")
-        self.ent_url.grid(row=2, column=0, padx=20, pady=(5, 10), sticky="ew")
+        self.ent_url.grid(row=3, column=0, padx=20, pady=(5, 10), sticky="ew")
         
         # Paths
-        self.lbl_paths = ctk.CTkLabel(self.sidebar_frame, text="Directories & Workflow:")
-        self.lbl_paths.grid(row=3, column=0, padx=20, pady=(10, 0), sticky="w")
+        self.lbl_paths = ctk.CTkLabel(self.sidebar_frame, text=t('directories_workflow'), font=ctk.CTkFont(family="Microsoft YaHei", size=14))
+        self.lbl_paths.grid(row=4, column=0, padx=20, pady=(10, 0), sticky="w")
         
-        self.ent_folder_a = ctk.CTkEntry(self.sidebar_frame, placeholder_text="Input Folder")
-        self.ent_folder_a.grid(row=4, column=0, padx=20, pady=(5, 5), sticky="ew")
-        self.btn_folder_a = ctk.CTkButton(self.sidebar_frame, text="Select Input", command=lambda: self.select_folder(self.ent_folder_a), fg_color="transparent", border_width=1)
-        self.btn_folder_a.grid(row=5, column=0, padx=20, pady=(0, 10), sticky="ew")
+        self.ent_folder_a = ctk.CTkEntry(self.sidebar_frame, placeholder_text=t('input_folder_placeholder'), font=ctk.CTkFont(family="Microsoft YaHei", size=13))
+        self.ent_folder_a.grid(row=5, column=0, padx=20, pady=(5, 5), sticky="ew")
+        self.btn_folder_a = ctk.CTkButton(self.sidebar_frame, text=t('btn_select_input'), command=lambda: self.select_folder(self.ent_folder_a), fg_color="transparent", border_width=1, height=32, font=ctk.CTkFont(family="Microsoft YaHei", size=14))
+        self.btn_folder_a.grid(row=6, column=0, padx=20, pady=(0, 10), sticky="ew")
         
-        self.ent_folder_b = ctk.CTkEntry(self.sidebar_frame, placeholder_text="Output Folder")
-        self.ent_folder_b.grid(row=6, column=0, padx=20, pady=(5, 5), sticky="ew")
-        self.btn_folder_b = ctk.CTkButton(self.sidebar_frame, text="Select Output", command=lambda: self.select_folder(self.ent_folder_b), fg_color="transparent", border_width=1)
-        self.btn_folder_b.grid(row=7, column=0, padx=20, pady=(0, 10), sticky="ew")
+        self.ent_folder_b = ctk.CTkEntry(self.sidebar_frame, placeholder_text=t('output_folder_placeholder'), font=ctk.CTkFont(family="Microsoft YaHei", size=13))
+        self.ent_folder_b.grid(row=7, column=0, padx=20, pady=(5, 5), sticky="ew")
+        self.btn_folder_b = ctk.CTkButton(self.sidebar_frame, text=t('btn_select_output'), command=lambda: self.select_folder(self.ent_folder_b), fg_color="transparent", border_width=1, height=32, font=ctk.CTkFont(family="Microsoft YaHei", size=14))
+        self.btn_folder_b.grid(row=8, column=0, padx=20, pady=(0, 10), sticky="ew")
         
-        self.ent_json = ctk.CTkEntry(self.sidebar_frame, placeholder_text="API JSON File")
-        self.ent_json.grid(row=8, column=0, padx=20, pady=(5, 5), sticky="ew")
-        self.btn_json = ctk.CTkButton(self.sidebar_frame, text="Select JSON", command=self.select_file, fg_color="transparent", border_width=1)
-        self.btn_json.grid(row=9, column=0, padx=20, pady=(0, 10), sticky="ew")
+        self.ent_json = ctk.CTkEntry(self.sidebar_frame, placeholder_text=t('api_json_placeholder'), font=ctk.CTkFont(family="Microsoft YaHei", size=13))
+        self.ent_json.grid(row=9, column=0, padx=20, pady=(5, 5), sticky="ew")
+        self.btn_json = ctk.CTkButton(self.sidebar_frame, text=t('btn_select_json'), command=self.select_file, fg_color="transparent", border_width=1, height=32, font=ctk.CTkFont(family="Microsoft YaHei", size=14))
+        self.btn_json.grid(row=10, column=0, padx=20, pady=(0, 10), sticky="ew")
         
         # Node IDs
         self.node_frame = ctk.CTkFrame(self.sidebar_frame, corner_radius=5)
-        self.node_frame.grid(row=10, column=0, padx=20, pady=(10, 20), sticky="ew")
+        self.node_frame.grid(row=11, column=0, padx=20, pady=(10, 10), sticky="ew")
         
-        self.lbl_load_id = ctk.CTkLabel(self.node_frame, text="LoadImage ID:")
+        self.lbl_load_id = ctk.CTkLabel(self.node_frame, text=t('load_image_id'), font=ctk.CTkFont(family="Microsoft YaHei", size=13))
         self.lbl_load_id.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="w")
         self.ent_load_id = ctk.CTkEntry(self.node_frame, width=50)
         self.ent_load_id.insert(0, "202")
         self.ent_load_id.grid(row=0, column=1, padx=(0, 10), pady=(10, 0), sticky="e")
         
-        self.lbl_save_id = ctk.CTkLabel(self.node_frame, text="SaveImage ID:")
+        self.lbl_save_id = ctk.CTkLabel(self.node_frame, text=t('save_image_id'), font=ctk.CTkFont(family="Microsoft YaHei", size=13))
         self.lbl_save_id.grid(row=1, column=0, padx=10, pady=(5, 10), sticky="w")
         self.ent_save_id = ctk.CTkEntry(self.node_frame, width=50)
         self.ent_save_id.insert(0, "136")
         self.ent_save_id.grid(row=1, column=1, padx=(0, 10), pady=(5, 10), sticky="e")
         
+        # Output Prefix
+        self.lbl_prefix = ctk.CTkLabel(self.sidebar_frame, text=t('output_prefix_label'), font=ctk.CTkFont(family="Microsoft YaHei", size=14))
+        self.lbl_prefix.grid(row=12, column=0, padx=20, pady=(5, 0), sticky="w")
+        self.ent_prefix = ctk.CTkEntry(self.sidebar_frame, placeholder_text=t('output_prefix_placeholder'), font=ctk.CTkFont(family="Microsoft YaHei", size=13))
+        self.ent_prefix.grid(row=13, column=0, padx=20, pady=(5, 10), sticky="ew")
+        
         # Start Button
-        self.btn_start = ctk.CTkButton(self.sidebar_frame, text="▶ START BATCH", height=45, font=ctk.CTkFont(weight="bold", size=16), command=self.start_processing)
-        self.btn_start.grid(row=11, column=0, padx=20, pady=(0, 20), sticky="ew")
+        self.btn_start = ctk.CTkButton(self.sidebar_frame, text=t('btn_start'), height=50, font=ctk.CTkFont(family="Microsoft YaHei", weight="bold", size=18), command=self.start_processing)
+        self.btn_start.grid(row=14, column=0, padx=20, pady=(0, 20), sticky="ew")
         
         # ------ MAIN VIEW (Right) ------
         # Main Frame configuration for full responsiveness
@@ -227,24 +265,24 @@ class ModernComfyUIApp(ctk.CTk):
         self.gallery_frame.grid(row=1, column=0, sticky="ew", pady=(5, 10))
         self.gallery_frame.grid_columnconfigure(1, weight=1) # Center label expands
         
-        self.btn_prev = ctk.CTkButton(self.gallery_frame, text="◀ Prev", width=80, command=self.prev_image)
+        self.btn_prev = ctk.CTkButton(self.gallery_frame, text=t('btn_prev'), width=90, height=32, font=ctk.CTkFont(family="Microsoft YaHei", size=14), command=self.prev_image)
         self.btn_prev.grid(row=0, column=0, padx=10)
         
-        self.lbl_gallery_status = ctk.CTkLabel(self.gallery_frame, text="Output Gallery: 0 images", font=ctk.CTkFont(size=14, weight="bold"))
+        self.lbl_gallery_status = ctk.CTkLabel(self.gallery_frame, text=t('gallery_status', count=0), font=ctk.CTkFont(family="Microsoft YaHei", size=14, weight="bold"))
         self.lbl_gallery_status.grid(row=0, column=1)
         
-        self.btn_reload = ctk.CTkButton(self.gallery_frame, text="🔄 Refresh", width=40, fg_color="transparent", border_width=1, command=self.load_gallery_from_disk)
+        self.btn_reload = ctk.CTkButton(self.gallery_frame, text=t('btn_refresh'), width=70, height=32, fg_color="transparent", border_width=1, font=ctk.CTkFont(family="Microsoft YaHei", size=13), command=self.load_gallery_from_disk)
         self.btn_reload.grid(row=0, column=2, padx=(0, 10))
         
-        self.btn_next = ctk.CTkButton(self.gallery_frame, text="Next ▶", width=80, command=self.next_image)
+        self.btn_next = ctk.CTkButton(self.gallery_frame, text=t('btn_next'), width=90, height=32, font=ctk.CTkFont(family="Microsoft YaHei", size=14), command=self.next_image)
         self.btn_next.grid(row=0, column=3, padx=10)
 
         # 3. Console Toggle
-        self.btn_toggle_console = ctk.CTkButton(self.main_frame, text="▼ Hide Console", width=120, height=28, fg_color="#333", hover_color="#444", command=self.toggle_console)
+        self.btn_toggle_console = ctk.CTkButton(self.main_frame, text=t('btn_hide_console'), width=130, height=30, fg_color="#333", hover_color="#444", font=ctk.CTkFont(family="Microsoft YaHei", size=13), command=self.toggle_console)
         self.btn_toggle_console.grid(row=1, column=0, sticky="w", pady=(5, 5))
         
         # 4. Console Log Area
-        self.log_area = ctk.CTkTextbox(self.main_frame, font=ctk.CTkFont(family="Consolas", size=12), state="disabled", height=120)
+        self.log_area = ctk.CTkTextbox(self.main_frame, font=ctk.CTkFont(family="Consolas", size=13), state="disabled", height=120)
         self.log_area.grid(row=2, column=0, sticky="nsew", pady=(0, 10))
         
         # 5. Progress Bar & Status
@@ -255,10 +293,15 @@ class ModernComfyUIApp(ctk.CTk):
         self.progress_bar.pack(side="left", fill="x", expand=True, padx=(0, 10))
         self.progress_bar.set(0)
         
-        self.lbl_status = ctk.CTkLabel(self.status_frame, text="Ready", width=100)
+        self.lbl_status = ctk.CTkLabel(self.status_frame, text=t('status_ready'), width=100, font=ctk.CTkFont(family="Microsoft YaHei", size=13))
         self.lbl_status.pack(side="right")
 
     # --- UI Logic Methods ---
+    def _on_language_change(self, choice):
+        """Handle language selection change."""
+        lang_code = 'en' if choice == self.localizer.get_language_name('en') else 'zh'
+        self.change_language(lang_code)
+    
     def select_folder(self, entry_widget):
         folder = filedialog.askdirectory()
         if folder:
@@ -267,7 +310,7 @@ class ModernComfyUIApp(ctk.CTk):
             self.load_gallery_from_disk()
 
     def select_file(self):
-        file = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
+        file = filedialog.askopenfilename(filetypes=[(t('file_dialog_json'), "*.json")])
         if file:
             self.ent_json.delete(0, "end")
             self.ent_json.insert(0, file)
@@ -277,10 +320,10 @@ class ModernComfyUIApp(ctk.CTk):
         self.console_visible = not self.console_visible
         if self.console_visible:
             self.log_area.grid()
-            self.btn_toggle_console.configure(text="▼ Hide Console")
+            self.btn_toggle_console.configure(text=t('btn_hide_console'))
         else:
             self.log_area.grid_remove()
-            self.btn_toggle_console.configure(text="▲ Show Console")
+            self.btn_toggle_console.configure(text=t('btn_show_console'))
 
     def load_gallery_from_disk(self):
         folder_b = self.ent_folder_b.get().strip()
@@ -299,12 +342,12 @@ class ModernComfyUIApp(ctk.CTk):
 
     def update_gallery_view(self):
         if not self.gallery_images or self.current_gallery_idx < 0:
-            self.lbl_gallery_status.configure(text="No images in Output Folder")
+            self.lbl_gallery_status.configure(text=t('gallery_no_images'))
             self.ab_widget.set_images(None, None)
             return
             
         filename = self.gallery_images[self.current_gallery_idx]
-        self.lbl_gallery_status.configure(text=f"{self.current_gallery_idx + 1} / {len(self.gallery_images)} : {filename}")
+        self.lbl_gallery_status.configure(text=t('gallery_image_info', current=self.current_gallery_idx + 1, total=len(self.gallery_images), filename=filename))
         
         folder_a = self.ent_folder_a.get().strip()
         folder_b = self.ent_folder_b.get().strip()
@@ -366,33 +409,34 @@ class ModernComfyUIApp(ctk.CTk):
         api_json = self.ent_json.get().strip()
         load_id = self.ent_load_id.get().strip()
         save_id = self.ent_save_id.get().strip()
+        prefix = self.ent_prefix.get().strip()
 
         if not all([url, folder_a, folder_b, api_json, load_id, save_id]):
-            messagebox.showwarning("Input Error", "Please fill all fields.")
+            messagebox.showwarning(t('msgbox_input_error_title'), t('msgbox_input_error_message'))
             return
 
         if not os.path.exists(folder_a) or not os.path.exists(api_json):
-            messagebox.showerror("Path Error", "Input folder or API JSON file does not exist.")
+            messagebox.showerror(t('msgbox_path_error_title'), t('msgbox_path_error_message'))
             return
 
         self.is_running = True
-        self.btn_start.configure(state="disabled", text="PROCESSING...")
+        self.btn_start.configure(state="disabled", text=t('btn_processing'))
         self.progress_bar.set(0)
         self.log_area.configure(state="normal")
         self.log_area.delete("1.0", "end")
         self.log_area.configure(state="disabled")
 
-        threading.Thread(target=self.process_workflow_thread, args=(url, folder_a, folder_b, api_json, load_id, save_id), daemon=True).start()
+        threading.Thread(target=self.process_workflow_thread, args=(url, folder_a, folder_b, api_json, load_id, save_id, prefix), daemon=True).start()
 
-    def process_workflow_thread(self, url, folder_a, folder_b, api_json, load_id, save_id):
+    def process_workflow_thread(self, url, folder_a, folder_b, api_json, load_id, save_id, prefix=""):
         try:
             os.makedirs(folder_b, exist_ok=True)
             
-            self.append_log("🔄 Initializing ComfyUI API...")
+            self.append_log(t('log_initializing'))
             api = ComfyUIAPI(server_address=url)
             
             if not api.check_connection():
-                self.append_log("❌ Failed to connect to ComfyUI. Is it running?")
+                self.append_log(t('log_connection_failed'))
                 self.finish_processing()
                 return
                 
@@ -403,31 +447,36 @@ class ModernComfyUIApp(ctk.CTk):
             images_to_process = [f for f in os.listdir(folder_a) if f.lower().endswith(valid_extensions)]
 
             if not images_to_process:
-                self.append_log(f"📉 No supported images found in {folder_a}.")
+                self.append_log(t('log_no_images_found', folder=folder_a))
                 self.finish_processing()
                 return
 
-            self.append_log(f"✅ Connected to ComfyUI. Found {len(images_to_process)} images.")
+            self.append_log(t('log_connected', count=len(images_to_process)))
+            if prefix:
+                self.append_log(t('log_prefix_info', prefix=prefix))
 
             for i, filename in enumerate(images_to_process, 1):
-                self.append_log("==============================")
-                self.append_log(f"🖼️ [{i}/{len(images_to_process)}] Processing: {filename}")
+                self.append_log(t('log_separator'))
+                self.append_log(t('log_processing_image', current=i, total=len(images_to_process), filename=filename))
                 self.update_progress(0, 1) 
                 
                 input_filepath = os.path.join(folder_a, filename)
-                output_filepath = os.path.join(folder_b, filename)
+                # Prepend the custom prefix to the output filename
+                output_filename = f"{prefix}{filename}" if prefix else filename
+                output_filepath = os.path.join(folder_b, output_filename)
 
-                self.append_log("📤 Uploading image to ComfyUI...")
+                self.append_log(t('log_uploading'))
                 uploaded_name = api.upload_image(input_filepath)
 
                 workflow = workflow_template.copy()
                 if load_id in workflow and "inputs" in workflow[load_id]:
                     workflow[load_id]["inputs"]["image"] = uploaded_name
                 if save_id in workflow and "inputs" in workflow[save_id]:
-                    # Keep original name prefix so output correctly matches input
-                    workflow[save_id]["inputs"]["filename_prefix"] = str(filename).rsplit('.', 1)[0]
+                    # Prepend custom prefix to the filename for ComfyUI output
+                    name_without_ext = str(filename).rsplit('.', 1)[0]
+                    workflow[save_id]["inputs"]["filename_prefix"] = f"{prefix}{name_without_ext}" if prefix else name_without_ext
 
-                self.append_log("⚙️ Starting execution pipeline...")
+                self.append_log(t('log_executing'))
                 outputs = api.process_prompt_ws(
                     prompt=workflow,
                     status_callback=lambda val, max_val: self.update_progress(val, max_val),
@@ -441,25 +490,25 @@ class ModernComfyUIApp(ctk.CTk):
                     with open(output_filepath, "wb") as f:
                         f.write(img_data)
                         
-                    self.append_log(f"💾 Saved generated image: {filename}")
+                    self.append_log(t('log_saved', filename=output_filename))
                     self.trigger_gallery_sync()
                 else:
-                    self.append_log(f"⚠️ Warning: Completed but no image outputs found for Node {save_id}.")
+                    self.append_log(t('log_warning_no_output', node_id=save_id))
 
-            self.append_log("🎉 All images processed successfully!")
-            messagebox.showinfo("Done", "Batch processing completed.")
+            self.append_log(t('log_completed'))
+            messagebox.showinfo(t('msgbox_done_title'), t('msgbox_done_message'))
 
         except Exception as e:
-            self.append_log(f"💥 Fatal Error: {str(e)}")
-            messagebox.showerror("Error", f"Processing failed: {str(e)}")
+            self.append_log(t('log_fatal_error', error=str(e)))
+            messagebox.showerror(t('msgbox_error_title'), t('msgbox_error_message', error=str(e)))
             
         finally:
             self.finish_processing()
 
     def finish_processing(self):
         self.is_running = False
-        self.btn_start.configure(state="normal", text="▶ START BATCH")
-        self.lbl_status.configure(text="Finished")
+        self.btn_start.configure(state="normal", text=t('btn_start'))
+        self.lbl_status.configure(text=t('status_finished'))
         self.progress_bar.set(1)
 
 if __name__ == "__main__":
